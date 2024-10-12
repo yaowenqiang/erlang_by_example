@@ -96,5 +96,34 @@
   + The Expression may not contain unbound variables
 
 
+```erlang
+{E, E, foo} = {abc, abc, foo}
+[H|T] = [1,2,3]
+f() 
+```
+
++ A = 10
++ {B,C,D} = {10, foo, bar}
++ {E, E, foo} = {abc, abc, foo}
++ [H|T] = [1,2,3]
++ {A, A, B} = [abc, def ,123] x .. or fail, binding none
++ [H|T] = []  
++ {A, _, [B|_], {B}} = {abc, 23, [22, x], {22}}
++ C = 10, {C ,C ,3} = {10, 10, 3} - Selection of components from complex data structures
+
+## Functions : syntax
+
+```erlang
+area({square, Side}) -> 
+    Side * Side;
+area({circle, Radius}) -> 
+    3.1416 * Radius * Radius;
+area({triangle, A,B,C}) -> 
+    S = (A + B + C) / 2,
+    math:sqrt(S*(S-A)*(S-b)*(S-C));
+area(Other) -> 
+    {error, invalid_object}
+
+```
 
 
