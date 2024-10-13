@@ -126,4 +126,58 @@ area(Other) ->
 
 ```
 
+### Function examples
 
+```erlang
+factorial(0) -> 1;
+factorial(N) -> 
+    N * factorial(N-1).
+
+
+## Modules
+
+```erlang
+-module(demo).
+-export([double/1]).
+% This is a comment
+% Everything after %' is ignored
+
+double(X) -> 
+    times(X, 2)
+
+times(X, N) -> 
+    X * N.
+```
+
+
+### Conditional Evaluation: case
+
+
+```erlang
+case lists:members(elementValueToTest, ListNameVariable) of 
+    true -> ok;
+    false -> {error, unknown}
+end
+
+```
+
+### Conditional Evaluation: if
+
+```erlang
+if
+    X <1 -> smaller;
+    X >1 -> bigger;
+    X ==1 -> equal
+end
+
+```
+
+
+## Get help in the erl(shell)
+
+```bash
+h() 
+h(lists)
+b()
+
+```
