@@ -325,3 +325,114 @@ average([], Length, Sum) -> Sum/Length.
 + Length and Sum play the role of accuumulators
 + average([]) is not defined
 + Evaluating average([]) would cause a run-time error
+
+## Concurrent Programming
+
+
+```erlang
+spawn(Mod,Func,Args ).
+```
+
++ Before 
+  + Code executed by Process 1
+  + Process Identifier is Pid1
+  + Pid2 = spawn(Mod, Func, Args)
++ After
+  + A new process with Pid2 is created
+  + Pid2 is only known to Pid1
+  + Pid2 runs Mod Func(Args)
+  + Mod Func/Arity must be exported
++ Convention: we identify processes by their process ids (pids)
+
+
+### Creating Processes
+
+```erlang
+spawn(Mod, Func, Args).
+```
+
++ The BIF spawn never fails
++ A process terminates
+  + abnormally when run-time errors occur
+  + normally when there is no more code to execute
+
+```erlang
+io:format("Hello~n").
+spawn(io, format, ["Hello~n"]).
+```
+
+### Message Passing
+
+
++ Messages are sendt using the Pid ! Msg expression
+  + Msg is from any valid Erlang data type
++ Sending a message will never fail
++ message sent to non-existing processes are thrown away
++ Received messages are stored in the process's mailbox
+
+```erlang
+Pid2 ! {self(), foo }
+
+flush(). % get shell process's mailbox
+```
+
+```erlang
+receive
+    {reset, Board} -> reset(Board);
+    _Other -> {error, unknown_msg}
+end
+```
+
+> message passing is asynchronous
+
+```erlang
+receive X -> X end.
+```
+
+### Receiving Messages
+
++ Messages can be matched and selectively retrived
++ Messages are received when a message matches a clause
++ Mailboxes are scanned sequentially
++ If Pid is bound before receivng the message, then only data tagged with that pid can be patten matched
++ The variable Digit is bound when receiving the message
+
+```erlang
+receive {Pid, {digit, Digit}} -> 
+    ---
+end.
+```
+
+```erlang
+receive 
+    foo -> true
+end.
+receive 
+    bar -> true
+end.
+```
+
++ The message foo is received, followed by the message bar
++ This is irrespective of the order in which they were sent or stored in the mailbox
+
+### Receiving Messages: non-selective
+
+```erlang
+receive msg -> true
+end.
+```
+
++ The first message to arrive at the process Pid3 will be processed
++ The variable Msg in the process Pid3 will be bound to one of the atomes foo or bar depending on which arrives first
+
+```erlang
+Pid = spawn(echo, echo, []).
+Pid ! {self(), hello}.
+receive X -> X end.
+
+Pid2 = spawn(echo, echo, []).
+Pid2 ! {self(), hello}.
+Pid2 ! {self(), world}.
+exit(Pid2, kill).
+
+```
