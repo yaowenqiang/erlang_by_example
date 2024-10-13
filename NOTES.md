@@ -132,7 +132,7 @@ area(Other) ->
 factorial(0) -> 1;
 factorial(N) -> 
     N * factorial(N-1).
-
+```
 
 ## Modules
 
@@ -181,3 +181,147 @@ h(lists)
 b()
 
 ```
+
+### Guards
+
+
+```erlang
+factorial(N) when N > 0 -> 
+    N * factorial(N-1);
+factorial(0) -> 1.
+
+% This is not the same as
+
+factorial(0) -> 1;
+factorial(N) -> 
+    N * factorial(N-1).
+
+```
+
++ The reserved word when introduced a guard
++ Guards can be used in function heads, case clauses, receive and if expressions
++ ==, =:=, <, >, etc
++ is_number(X), is_integer(X), is_float(X)
++ - X is a number
++ is_atom(X), is_tuple(X), etc
+
+### Build-in Functions
+
++ date()
++ time()
++ length(List)
++ size(Tuple)
++ atom_to_list(Atom)
++ list_to_tuple(List)
++ integer_to_list(2235)
++ tuple_to_list(Tuple)
+
++ Do what you cannot do (or is difficult to do) in Erlang
++ MOstly written in C for fast execution
++ BIFs are by conversion regarded as being in the erlang module.
+
+### Recursion: self-describing code
+
+```erlang
+sum([]) -> 0;
+sum([H|T]) -> H + sum(T).
+```
+
++ You can read the programs as an executable description
++ "The sum of an empty list is 0."
++ "The sum of a non-empty list is the head of the list added to the sum of the tail."
+
+
+### Data Types: lists
+
+
+```erlang
+List = [Element + List] or []
+```
+
++ A recursive list definition consistes of a head and a tail
++ Every list is either empty
++ ... or has a head which is an element 
++ and a tail which is a list
+
+### Recursion: traversing lists:
+
+```erlang
+printAll([]) -> 
+    io:format("~n", []);
+printAll([X|Xs]) -> 
+    io:format("~p ", [X]),
+    printAll(Xs).
+```
+
++ Here we're traversing the list imperatively:
++ "If there are no more elements to process, stop"
++ "If there are further elements, process the head, and then call the function recursively on the tail."
+
+```erlang
+printAll(Ys) -> 
+    case Ys of
+        [] -> 
+            io:format("~n", []);
+        [X|Xs] ->
+            io:format("~p ", [X]),
+            printAll(Xs)
+    end.
+```
+
++ Same function again:
++ shows the loop clearly.
++ the call to printAll(xs) is like a jump back to the top of the loop
++ Thi is a tail recursive function: The only recursive calls come at the end of the bodies of the clauses
+
+### Recursion: more patterns
+
+
+```erlang
+double([H|T]) -> [2*H|double(T)];
+double([]) -> [].
+
+member(H, [H|_]) -> true;
+member(X, [_|T]) -> member(X, T);
+member(_, []) -> false.
+
+even([H|T]) when H rem 2 == 0 -> [H|even(T)];
+even([_|T]) -> even(T);
+even([]) -> [].
+
+```
+
++ double/1 maps elements in a list and returns a new list
++ member/2 is a predicate looking for an element in a list
++ even/1 filters a list of integers and returns the subset of even numbers
++ The function member/2 is the only one which is tail recursive
+
+### Recursion: traversing lists
+
+
+```erlang
+average(X) -> sum(X) / len(X).
+sum([H|T]) -> H + sum(T);
+sum([]) -> 0.
+
+len([_|T]) -> 1 + len(T);
+len([]) -> 0.
+```
+
++ Note the pattern of recursion is the same in both cases
++ Taking a list and evaluating an element is a very common pattern
+
+### Recursion: accumulators
+
+```erlang
+average(X) -> average(X, 0,0).
+average([H|T], Length, Sum) 0> aveage(T, Length+1, Sum + H);
+average([], Length, Sum) -> Sum/Length.
+
+```
+
++ Only taverses the list once.
++ Executes in constant space(tail recursive)
++ Length and Sum play the role of accuumulators
++ average([]) is not defined
++ Evaluating average([]) would cause a run-time error
