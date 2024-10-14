@@ -369,6 +369,7 @@ spawn(io, format, ["Hello~n"]).
 + Sending a message will never fail
 + message sent to non-existing processes are thrown away
 + Received messages are stored in the process's mailbox
++ Sending messages to non-existing registered processes cause the calling process to terminate with a badarg error
 
 ```erlang
 Pid2 ! {self(), foo }
@@ -436,3 +437,32 @@ Pid2 ! {self(), world}.
 exit(Pid2, kill).
 
 ```
+
+## Registered Processes
+
+```erlang
+register(Alias, Pid)
+Alias ! Message
+```
+
++ Registers the process Pid with the name Alias
++ Any process can send a message to a registered process
++ The BIF register/0 returns all registered processes names
++ The BIF whereis/1 returns the Pid of the process with the name Alias
+
+### Timeouts
+
+
+
+```erlang
+receive
+    Msg ->
+        <expression!>
+    after TimeOut ->
+        <expression2>
+    end.
+```
+
++ If the message Msg is received withing the TimeOut, <expressions1> will be executed
++ If not, <expression2> will be executed
++ TimeOut is an integer denoting the time miliseconds or the atom infinity
