@@ -466,3 +466,55 @@ receive
 + If the message Msg is received withing the TimeOut, <expressions1> will be executed
 + If not, <expression2> will be executed
 + TimeOut is an integer denoting the time miliseconds or the atom infinity
+
+### Timeouts
+
+
+```erlang
+read(Key) ->
+    db ! {self(), {read, Key}},
+    receive
+        {read, R} -> 
+            {ok, R};
+        {error, Reason} ->
+            {error, Reson}
+        after 1000 ->
+            {error, timeout}
+    end.
+```
+
++ If the server takes more then a second to handle the request, a timeout is generated
++ Do not forget to handle messages received after a timeout
+
+
+```erlang
+flush() -> 
+    receive
+        _ -> flush()
+    after 0 -> 
+        ok
+    end.
+```
+
+
++ flush() will clear the mailbox from all messages, stopping when it is empty.
+
+### Process ring
+
+```erlang
+    start(Num) ->
+        start_proc(Num, self()).
+    start_proc(0, Pid) -> 
+        Pid ! ok;
+    start_proc(Num, Pid) ->
+        NPid = spawn(ring, start_proc, [Num -1, Pid]),
+        NPid ! ok,
+        receive
+            ok -> ok
+        end.
+```
+
+```erlang
+timer:tc(ring, start, [100000]).
+```
+
