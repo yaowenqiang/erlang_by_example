@@ -518,3 +518,33 @@ flush() ->
 timer:tc(ring, start, [100000]).
 ```
 
+
+## Process Error Handling
+
+### Links
+
+```erlang
+link(Pidb)
+```
+
+
++ link/1 will create a bidirectional link between the process calling the BIF and the process PidB
++ spawn_link/3 will yield the same result as calling spawn/3 followed by link/1, only that it will do it automatically
++ unlink(Pid) Removes a link to Pid
++ Exit Singals are sent when processes terminate abnormally
++ They are sent to all processes to which the failing processes is currently linked to
++ The process receiving the singal will exit, will propagate a new signal to the processes it is linked to
++ When processes PidA fails, the exit signals propagate to PidB
++ From PidB, it propogates to PidC
+
+
+### Exit Signals
+
++ Processes can trap exit signals by calling the BIF process_flag(trap_exit, true)
++ Exit signals will be converted to messages of the format {"EXIT", Pid, Reason}
++ They are save in the process mailbox
++ If an exit signal is trapped, it does not propagate further
++ Processes B marked with double ring is trapping EXITs
++ If an error occurs in A or C, then they will terminate
++ Process B Will receive the {'EXIT', Pid, reason} message
++ The process that did not terminate will not be affected
