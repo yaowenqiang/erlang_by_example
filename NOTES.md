@@ -548,3 +548,21 @@ link(Pidb)
 + If an error occurs in A or C, then they will terminate
 + Process B Will receive the {'EXIT', Pid, reason} message
 + The process that did not terminate will not be affected
+
+### Definitions: built-in functions
+
++ the BIF exit(Reason) terminates the process which calls it
++ exit(Pid, Reason) sends an exit signal containing Reason to the process Pid
++ if trapping exits, the signal is converted to an exit message
+
+### Propagation Semantics: no trapping
+
++ PidA terminates normally, nothing happens to PidB
++ PidA killed with reason kill results in PidB terminating with reason "killed"
++ PidA terminates with reason Other results in PidB terminating with reason "Other"
+
+### Propagation Semantics: trapping exits
+
++ PidA terminates with reason normal results in PidB receiving {"EXIT", PidA, normal}
++ PidA sends the exit reason kill to PidB who terminates with reason killed
++ PidA terminates with reason "Other" results in PidB receives {"EXIT", PidA, Other}
