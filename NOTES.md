@@ -566,3 +566,88 @@ link(Pidb)
 + PidA terminates with reason normal results in PidB receiving {"EXIT", PidA, normal}
 + PidA sends the exit reason kill to PidB who terminates with reason killed
 + PidA terminates with reason "Other" results in PidB receives {"EXIT", PidA, Other}
+
+
+## A Mobile Frequency Server
+
++ Allocation of frequencies for mobile phone communications
++ A client can request that a frequency be allocated
++ A client can deallocate a frequency
++ The frequency server is a separate process, communicating with the clients
++ Alternatives:
+  + Communication mechanisum?
+  + Communication protocol?
+  + Code by hand or use OTP?
+
+### Frequency Allocation and Deallocation
+
+
+```erlang
+allocate({[], Allocated}, _Pid) ->
+    {{[], Allocated},
+        {error, no_frequency} }
+allocate({[Freq|Free], Allocated}, Pid) ->
+    {{Free, [{Freq, Pid}|Allocated]},{ok, Freq}}.
+deallocate({Free, Allocated}, Freq) ->
+    NewAllocated = lists:keydelete(Freq, 1, Allocated),
+    {[Freq|Free], NewAllocated}.
+```
+
++ A pare of lists models free and allocated frequencies
++ Return the new paire plus a message with te result
++ Deallocation succeeds, assuming the Freq was already allocated
+
+
+### Server: everything explicit
+
+
+```erlang
+    loop(Frquencies) ->
+        receive
+            {request, Pid, allocate} ->
+                {NewFrequencies, Reply} = allocate(Frequencies, Pid),
+                Pid ! {reply: Reply},
+                loop(NewFrequencies);
+            {request, Pid, deallocate, Freq} ->
+                NewFrequencies = deallocate(Frequencies, Freq),
+                Pid ! {reply ok},
+                loop(NewFrequencies);
+            {request, Pid, stop} ->
+                Pid ! {reply ,ok}
+        end.
+```
+
++ Messages:
+  + request
+  + process Id of the sender and service required
++ Reples:
+  + reply
+  + result (if any)
++ Loop again, with update frequency data
+ 
+### Setting up the server
+
+
+```erlang
+start() -> 
+    register(frequency, spawn(?MODULE, init, [])).
+init() ->
+    Frequencies = {get_frequencies(), []},
+    loop(Frequencies).
+
+% Hard Coded
+
+get_frequencies() -> [10,11,12,13,14,15].
+loop(Frequencies) ->
+    receive
+        {request, Pid, allocate} ->
+            {NewFrequencies, Reply} = allocate(Frequencies, Pid),
+            Pid ! {reply, Reply},
+            loop(NewFrequencies);
+        {request, Pid, deallocate, Freq} ->
+            NewFrequencies = deallocate(Frequencies, Freq),
+```
+
++ Spawn a process to run the init function
++ register this process with the name frequency
++ init will set up the loop data and call the loop for the first time
