@@ -651,3 +651,33 @@ loop(Frequencies) ->
 + Spawn a process to run the init function
 + register this process with the name frequency
 + init will set up the loop data and call the loop for the first time
+
+```bash
+1> c(frequency).
+{ok,frequency}
+2> frequency:start().
+true
+3> frequency ! {request, self(), allocate}.
+{request,<0.84.0>,allocate}
+4> receive X -> X end.
+{reply,{ok,10}}
+5> frequency ! {request, self(), allocate}.
+{request,<0.84.0>,allocate}
+6> receive {reply, {ok, Freq}} -> Freq end.
+7> frequency ! {request, self(), stop}.
+{request,<0.84.0>,stop}
+8> receive Y -> Y end.
+{reply,ok}
+
+```
+
+### A process skeleton
+
+
++ A common skeleton for a concurrent process
++ initialise the loop data, based on data passed to the initial spawon
++ Loop:
+  + receive message
+  + handle it, and call loop with new data
++ Terminate / clean up
++ 
