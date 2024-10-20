@@ -680,4 +680,96 @@ true
   + receive message
   + handle it, and call loop with new data
 + Terminate / clean up
-+ 
+
+
+### Client2: a functional interface
+
+```erlang
+allocate() ->
+    frequency ! {request, self(), allocate},
+    receive
+        {reply, Reply} -> Reply
+    end.
+
+deallocate(Freq) ->
+    frequency ! {request, self(), deallocate, Freq},
+    receive
+        {reply, Reply} -> Reply
+    end.
+```
+
++ A functional API for the operations hides the process information and message protocol
++ Function sends the message and handles the reply
++ Higher-level API but concurrent behaviour is still hand coded
+
+
+### Monitoring clients
+
++ What happens if the client crashes before it sends the frequency release message?
++ The frequency will not be deallocated, and so other clients won't be able to use it
+
+### Make the server monitor the clients
+
++ When client is allocated a frequency, the server will link to it
++ client sends exit message if it terminates before it deallocates
++ Can then ensure deallocation
++ If client deallocates normally, remove the link to it
+
+## Building the serve in OTP:gen_server
+
++ Generic server behavior
+  + Concurrency, error recovery, supervision protocols, timeouts, ... are all handled generically
+  + In contrast to our spawn / register / init / loop implementation which was all hand coded
++ Specific behavior is confined to
+  + Message exchanges with the server
+  + Server setup and termination options
++ System has the same client API as before ... another reason for the functional interface
+
+
+### Setup and client API functions
+
+```erlang
+-behaviour(gen_server).
+
+start() -> gen_server:start_link({local, ?MODULE}, ?MODULE, get_frequencies(), []).
+
+stop() -> gen_server:cast(?MODULE, stop).
+
+allocate() -> gen_server:call(?MODULE, {allocate, self()}).
+
+deallocate(Freq) -> gen_server:call(?MODULE, {deallocate, Freq}).
+```
+
++ behaviour: need to supply callbacks 
++ start_link: will start then link, automically
++ cast is asynchronous
++ call is synchronous
+
+
+### The callback functions
+
+
+```erlang
+init(FreqList) ->
+    Frqs = {FreqList, []},
+    {ok, Frqs}.
+
+handle_cast(stop, Freqs) ->
+    {stop, normal, Freqs}.
+
+handle_call({allocate, Pid}, From, Freqs) ->
+    {NewFreqs, Reply} = allocate(Freqs, Pid),
+    {reply, Reply, NewFreqs};
+
+handle_call({deallocate, Freq}, _From, Freqs) ->
+    NewFreqs = deallocate(Freqs, Freq),
+    {reply, ok, NewFreqs};
+
+terminate(_Reason, State) ->
+    %% Clean up
+    Ok.
+```
+
++ These functions give the partitular pieces of behavior with specify setup, teardown and communications
++ The comms protocol is limited to simple request/response
++ (A)synchronous cast / call (terminate)
